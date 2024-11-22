@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .recipe-card {
+            background-color: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .recipe-card button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .recipe-card button:hover {
+            background-color: darkred;
+        }
+        .form-container {
+            margin-bottom: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Recipe App</h1>
+    </header>
+    <div class="container">
+        <!-- Form to add new recipe -->
+        <div class="form-container">
+            <h3>Add a New Recipe</h3>
+            <form id="recipe-form">
+                <input type="text" id="name" placeholder="Recipe Name" required />
+                <textarea id="ingredients" placeholder="Ingredients" required></textarea>
+                <textarea id="instructions" placeholder="Instructions" required></textarea>
+                <button type="submit">Add Recipe</button>
+            </form>
+        </div>
+
+        <!-- List of recipes -->
+        <h3>Recipes</h3>
+        <div id="recipe-list"></div>
+    </div>
+
+    <script>
+        // Function to fetch and display recipes
+        async function fetchRecipes() {
+            const response = await fetch('http://localhost:3000/recipes');
+            const recipes = await response.json();
+            const recipeList = document.getElementById('recipe-list');
+            recipeList.innerHTML = '';
+
+            recipes.forEach(recipe => {
+                const card = document.createElement('div');
+                card.className = 'recipe-card';
+                card.innerHTML = `
+                    <h3>${recipe.name}</h3>
+                    <p><strong>Ingredients:</strong> ${recipe.ingredients}</p>
+                    <p><strong>Instructions:</strong> ${recipe.instructions}</p>
+                    <button onclick="deleteRecipe(${recipe.id})">Delete</button>
+                `;
+                recipeList.appendChild(card);
+            });
+        }
+
+        // Function to delete a recipe
+        async function deleteRecipe(id) {
+            const response = await fetch(`http://localhost:3000/recipes/${id}`, {
+                method: 'DELETE',
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert('Recipe deleted successfully');
+                fetchRecipes(); // Refresh the recipe list
+            } else {
+                alert('Error deleting recipe: ' + result.error);
+            }
+        }
+
+        // Function to handle form submission
+        document.getElementById('recipe-form').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent the default form submission
+
+            const name = document.getElementById('name').value;
+            const ingredients = document.getElementById('ingredients').value;
+            const instructions = document.getElementById('instructions').value;
+
+            const response = await fetch('http://localhost:3000/recipes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, ingredients, instructions }),
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                alert('Recipe added successfully');
+                fetchRecipes(); // Refresh the recipe list
+                document.getElementById('recipe-form').reset(); // Clear the form
+            } else {
+                alert('Error adding recipe: ' + result.error);
+            }
+        });
+
+        // Fetch the recipes when the page loads
+        window.onload = fetchRecipes;
+    </script>
+</body>
+</html>
